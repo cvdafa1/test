@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <title>历史信息</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .message-list {
+            margin-top: 20px;
+        }
+        .message-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 10px;
+        }
+        .system {
+            color: #1890ff;
+            font-weight: bold;
+        }
+        .user {
+            color: #52c41a;
+        }
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 8px 16px;
+            background: #1890ff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>历史信息</h1>
+        <div class="message-list" id="messageList">
+            <!-- 历史消息将动态加载到这里 -->
+        </div>
+        <a href="javascript:history.back()" class="back-btn">返回</a>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000/api/v1/get_msg';
+
+        async function loadHistoryMessages() {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({})
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const historyData = await response.json();
+                renderMessages(historyData.data);
+
+            } catch (error) {
+                console.error('加载历史消息失败:', error);
+                showErrorMessage('加载历史消息失败，请稍后重试');
+            }
+        }
+
+        function renderMessages(historyData) {
+            const container = document.getElementById("messageList");
+            container.innerHTML = ""; // 清空
+
+            if (!Array.isArray(historyData) || historyData.length === 0) {
+                container.innerHTML = "<p>暂无历史信息。</p>";
+                return;
+            }
+
+            historyData.forEach(item => {
+                const div = createMessageElement(item);
+                container.appendChild(div);
+            });
+        }
+
+        function createMessageElement(item) {
+            const div = document.createElement("div");
+            div.className = `message-item ${item.type}`;
+            div.innerHTML = `
+                <strong>${item.date_time} ${item.id}:</strong>
+                ${item.msg}
+            `;
+
+            return div;
+        }
+
+        function showErrorMessage(message) {
+            const container = document.getElementById("messageList");
+            container.innerHTML = `<p style="color: red;">${message}</p>`;
+        }
+
+        // 页面加载完成后执行
+        window.onload = loadHistoryMessages;
+    </script>
+</body>
+</html>
